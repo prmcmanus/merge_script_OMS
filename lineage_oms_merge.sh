@@ -154,7 +154,6 @@ done
 
 # DO NOT EDIT THIS
 SUBS_REPOS="
-.repo/manifests
 frameworks/base
 frameworks/native
 packages/apps/Contacts
