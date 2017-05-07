@@ -25,7 +25,7 @@
 
 # PURPOSE: Merge Substratum support from LineageOMS org into LineageOS repos
 #
-# USAGE: $ bash lineage_oms_merge.sh -h
+# USAGE: $ bash lineage_oms_update.sh -h
 
 
 ############
@@ -222,24 +222,22 @@ for FOLDER in ${SUBS_REPOS}; do
     		newLine; echoText "${DIFF} missing commits"
     		
     		# GET SECOND HASH
-    		SECOND_HASH=$( git log --format=%H --committer="Nathan Chancellor" FETCH_HEAD~${DIFF}^..FETCH_HEAD~${DIFF} )
+    		SECOND_HASH_ORIGIN=$( git log --format=%H --committer="Nathan Chancellor" FETCH_HEAD~${DIFF}^..FETCH_HEAD~${DIFF} )
     		
     		# RESET ANY LOCAL CHANGES SO THAT CHERRY-PICK DOES NOT FAIL
 				git reset --hard HEAD
 				# PICK THE COMMITS IF EVERYTHING CHECKS OUT
-				git cherry-pick ${SECOND_HASH}^..${FIRST_HASH_ORIGIN}
+				git cherry-pick ${SECOND_HASH_ORIGIN}^..${FIRST_HASH_ORIGIN}
 
 				# ADD TO RESULT STRING
-				if [[ $? -ne 0 ]]; then
-				    RESULT_STRING+="${FOLDER}: ${RED}FAILED${RESTORE}\n"
-				else
-				    RESULT_STRING+="${FOLDER}: ${GREEN}SUCCESS${RESTORE}\n"
+				    RESULT_STRING+="${FOLDER}: ${GREEN}SUCCESS, ${DIFF} commits added${RESTORE}\n"
 				fi
 				
 				
 		# IF THERE AREN'T ANY COMMITS MISSING, DONE
 		else
 			newLine; echoText "No missing commits"
+			RESULT_STRING+="${FOLDER}: ${RED}FAILED, no missing commits${RESTORE}\n"
 		fi
 		
 done

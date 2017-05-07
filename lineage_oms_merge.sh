@@ -219,6 +219,9 @@ for FOLDER in ${SUBS_REPOS}; do
     git reset --hard HEAD
     # PICK THE COMMITS IF EVERYTHING CHECKS OUT
     git cherry-pick ${SECOND_HASH}^..${FIRST_HASH}
+    
+    # PUSH TO GITHUB
+    git push upstream cm-14.1-OMSrootless2
 
     # ADD TO RESULT STRING
     if [[ $? -ne 0 ]]; then
@@ -231,9 +234,6 @@ done
 # SHIFT BACK TO THE TOP OF THE REPO
 cd ${SOURCE_DIR}
 
-# SYNC THEME INTERFACER REPO
-newLine; echoText "Syncing packages/services/ThemeInterfacer"
-repo sync --force-sync packages/services/ThemeInterfacer
 
 # PRINT RESULTS
 echoText "RESULTS"
