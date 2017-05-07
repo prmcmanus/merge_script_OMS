@@ -180,11 +180,11 @@ unset RESULT_STRING
 START=$( date +%s )
 
 for FOLDER in ${SUBS_REPOS}; do
-    # PRINT TO THE USER WHAT WE ARE DOING
+ # PRINT TO THE USER WHAT WE ARE DOING
     newLine; echoText "Merging ${FOLDER}"
 
     # SHIFT TO PROPER FOLDER
-    cd ${SOURCE_DIR}/${FOLDER}
+    cd ${SOURCE_DIR}/frameworks/base
 
     # SET PROPER URL
     if [[ ${FOLDER} == ".repo/manifests" ]]; then
@@ -197,41 +197,49 @@ for FOLDER in ${SUBS_REPOS}; do
     # FIND NUMBER OF COMMITS IN THE UPSTREAM REPO (MATSSA56)
     # MUST BE ON THE CORRECT BRANCH FOR THIS TO WORK
     git checkout cm-14.1-OMSrootless2
+    git fetch https://github.com/Matssa56/${URL} cm-14.1-OMSrootless2
   
-    # GET NUMBER OF COMMITS MADE BY NATHAN
-    NUMBER_OF_COMMITS_UPSTREAM=$(( $( git log --format=%H --committer="Nathan Chancellor" FETCH_HEAD | wc -l ) - 1 ))
+    # GET NUMBER OF COMMITS MADE BY MATSSA
+    #newLine; echoText "Checking number of commits upstream"
+    NUMBER_OF_COMMITS_UPSTREAM=$(( $( git log --format=%H --committer="Matssa56" FETCH_HEAD | wc -l ) ))
+    #newLine; echoText "Number of commits upstream = ${NUMBER_OF_COMMITS_UPSTREAM}"
     
     
     # FIND NUMBER OF COMMITS IN THE ORIGIN REPO (LINEAGEOMS)
     # FETCH THE REPO
+    #newLine; echoText "Fetching repo"
     git fetch https://github.com/LineageOMS/${URL} cm-14.1
 
     # FIRST HASH WILL ALWAYS BE THE FETCH HEAD
     FIRST_HASH_ORIGIN=$(git log --format=%H -1 FETCH_HEAD)
 
     # GET NUMBER OF COMMITS MADE BY NATHAN
-    NUMBER_OF_COMMITS_ORIGIN=$(( $( git log --format=%H --committer="Nathan Chancellor" FETCH_HEAD | wc -l ) - 1 ))
+    NUMBER_OF_COMMITS_ORIGIN=$(( $( git log --format=%H --committer="Nathan Chancellor" FETCH_HEAD | wc -l ) ))
+    #newLine; echoText "Number of commits origin = ${NUMBER_OF_COMMITS_ORIGIN}"
     
     
     # MERGE IS NECESSARY
     # SEE IF THERE ARE SOME COMMITS MISSING
-    DIFF=${NUMBER_OF_COMMITS_ORIGIN}-${NUMBER_OF_COMMITS_UPSTREAM}
+    DIFF=$((NUMBER_OF_COMMITS_ORIGIN - NUMBER_OF_COMMITS_UPSTREAM))
+
     
     # IF THERE ARE COMMITS MISSING, MERGE THEM
     if [[ ${DIFF} != 0 ]]; then
     		newLine; echoText "${DIFF} missing commits"
     		
     		# GET SECOND HASH
-    		SECOND_HASH_ORIGIN=$( git log --format=%H --committer="Nathan Chancellor" FETCH_HEAD~${DIFF}^..FETCH_HEAD~${DIFF} )
+    		SECOND_HASH=$( git log --format=%H --committer="Nathan Chancellor" FETCH_HEAD~$((DIFF - 1))^..FETCH_HEAD~$((DIFF - 1)) )
     		
     		# RESET ANY LOCAL CHANGES SO THAT CHERRY-PICK DOES NOT FAIL
 				git reset --hard HEAD
 				# PICK THE COMMITS IF EVERYTHING CHECKS OUT
-				git cherry-pick ${SECOND_HASH_ORIGIN}^..${FIRST_HASH_ORIGIN}
+				git cherry-pick ${SECOND_HASH}^..${FIRST_HASH_ORIGIN}
+
+				# PUSH TO GITHUB
+				git push upstream cm-14.1-OMSrootless2
 
 				# ADD TO RESULT STRING
-				    RESULT_STRING+="${FOLDER}: ${GREEN}SUCCESS, ${DIFF} commits added${RESTORE}\n"
-				fi
+				RESULT_STRING+="${FOLDER}: ${GREEN}SUCCESS, ${DIFF} commits added${RESTORE}\n"
 				
 				
 		# IF THERE AREN'T ANY COMMITS MISSING, DONE
