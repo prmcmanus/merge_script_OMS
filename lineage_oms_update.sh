@@ -184,7 +184,7 @@ for FOLDER in ${SUBS_REPOS}; do
     newLine; echoText "Merging ${FOLDER}"
 
     # SHIFT TO PROPER FOLDER
-    cd ${SOURCE_DIR}/frameworks/base
+    cd ${SOURCE_DIR}/${FOLDER}
 
     # SET PROPER URL
     if [[ ${FOLDER} == ".repo/manifests" ]]; then
