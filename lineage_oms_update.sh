@@ -244,7 +244,7 @@ for FOLDER in ${SUBS_REPOS}; do
 				
 		# IF THERE AREN'T ANY COMMITS MISSING, DONE
 		else
-			newLine; echoText "No missing commits"
+			newLine; echoText "No missing commits\nDIFF = ${DIFF}"
 			RESULT_STRING+="${FOLDER}: ${RED}FAILED, no missing commits${RESTORE}\n"
 		fi
 		
