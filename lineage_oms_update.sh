@@ -193,47 +193,59 @@ for FOLDER in ${SUBS_REPOS}; do
         URL=android_$( echo ${FOLDER} | sed "s/\//_/g" )
     fi
     
-    # USE THE CORRECT BRANCH
-    git branch -D cm-14.1-OMSrootless2
-    git checkout -b cm-14.1-OMSrootless2
-
+    
+    # FIND NUMBER OF COMMITS IN THE UPSTREAM REPO (MATSSA56)
+    # MUST BE ON THE CORRECT BRANCH FOR THIS TO WORK
+    git checkout cm-14.1-OMSrootless2
+  
+    # GET NUMBER OF COMMITS MADE BY NATHAN
+    NUMBER_OF_COMMITS_UPSTREAM=$(( $( git log --format=%H --committer="Nathan Chancellor" FETCH_HEAD | wc -l ) - 1 ))
+    
+    
+    # FIND NUMBER OF COMMITS IN THE ORIGIN REPO (LINEAGEOMS)
     # FETCH THE REPO
     git fetch https://github.com/LineageOMS/${URL} cm-14.1
 
-    # GIT GYMNASTICS (GETS MESSY, BEWARE)
     # FIRST HASH WILL ALWAYS BE THE FETCH HEAD
-    FIRST_HASH=$(git log --format=%H -1 FETCH_HEAD)
+    FIRST_HASH_ORIGIN=$(git log --format=%H -1 FETCH_HEAD)
 
-    # SECOND HASH WILL BE THE LAST THING I COMMITTED
-    NUMBER_OF_COMMITS=$(( $( git log --format=%H --committer="Nathan Chancellor" FETCH_HEAD | wc -l ) - 1 ))
-    SECOND_HASH=$( git log --format=%H --committer="Nathan Chancellor" FETCH_HEAD~${NUMBER_OF_COMMITS}^..FETCH_HEAD~${NUMBER_OF_COMMITS} )
+    # GET NUMBER OF COMMITS MADE BY NATHAN
+    NUMBER_OF_COMMITS_ORIGIN=$(( $( git log --format=%H --committer="Nathan Chancellor" FETCH_HEAD | wc -l ) - 1 ))
+    
+    
+    # MERGE IS NECESSARY
+    # SEE IF THERE ARE SOME COMMITS MISSING
+    DIFF=${NUMBER_OF_COMMITS_ORIGIN}-${NUMBER_OF_COMMITS_UPSTREAM}
+    
+    # IF THERE ARE COMMITS MISSING, MERGE THEM
+    if [[ ${DIFF} != 0 ]]; then
+    		newLine; echoText "${DIFF} missing commits"
+    		
+    		# GET SECOND HASH
+    		SECOND_HASH=$( git log --format=%H --committer="Nathan Chancellor" FETCH_HEAD~${DIFF}^..FETCH_HEAD~${DIFF} )
+    		
+    		# RESET ANY LOCAL CHANGES SO THAT CHERRY-PICK DOES NOT FAIL
+				git reset --hard HEAD
+				# PICK THE COMMITS IF EVERYTHING CHECKS OUT
+				git cherry-pick ${SECOND_HASH}^..${FIRST_HASH_ORIGIN}
 
-    # NOW THAT WE HAVE THE HASHES, WE WANT TO TRY AND SEE IF OMS ALREADY EXISTS
-    # THIS SCRIPT NEEDS TO BE RUN ON A CLEAN REPO
-    SECOND_COMMIT_MESSAGE=$( git log --format=%s ${SECOND_HASH}^..${SECOND_HASH} | sed "s/\[\([^]]*\)\]/\\\[\1\\\]/g" )
-    if [[ $( git log --format=%h --grep="${SECOND_COMMIT_MESSAGE}" --all-match | wc -l ) > 0 && ${URL} != "android" ]]; then
-        reportError "PREVIOUS COMMITS FOUND; SCRIPT MUST BE RUN ON A CLEAN REPO! EITHER REPO SYNC OR PICK COMMITS MANUALLY!" && exit
-    fi
-
-    # RESET ANY LOCAL CHANGES SO THAT CHERRY-PICK DOES NOT FAIL
-    git reset --hard HEAD
-    # PICK THE COMMITS IF EVERYTHING CHECKS OUT
-    git cherry-pick ${SECOND_HASH}^..${FIRST_HASH}
-
-    # ADD TO RESULT STRING
-    if [[ $? -ne 0 ]]; then
-        RESULT_STRING+="${FOLDER}: ${RED}FAILED${RESTORE}\n"
-    else
-        RESULT_STRING+="${FOLDER}: ${GREEN}SUCCESS${RESTORE}\n"
-    fi
+				# ADD TO RESULT STRING
+				if [[ $? -ne 0 ]]; then
+				    RESULT_STRING+="${FOLDER}: ${RED}FAILED${RESTORE}\n"
+				else
+				    RESULT_STRING+="${FOLDER}: ${GREEN}SUCCESS${RESTORE}\n"
+				fi
+				
+				
+		# IF THERE AREN'T ANY COMMITS MISSING, DONE
+		else
+			newLine; echoText "No missing commits"
+		fi
+		
 done
 
 # SHIFT BACK TO THE TOP OF THE REPO
 cd ${SOURCE_DIR}
-
-# SYNC THEME INTERFACER REPO
-newLine; echoText "Syncing packages/services/ThemeInterfacer"
-repo sync --force-sync packages/services/ThemeInterfacer
 
 # PRINT RESULTS
 echoText "RESULTS"
