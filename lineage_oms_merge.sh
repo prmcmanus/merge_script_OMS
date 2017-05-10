@@ -194,8 +194,8 @@ for FOLDER in ${SUBS_REPOS}; do
     fi
     
     # USE THE CORRECT BRANCH
-    git branch -D cm-14.1-OMSrootless2
-    git checkout -b cm-14.1-OMSrootless2
+    git branch -D cm-14.1-OMSrootless
+    git checkout -b cm-14.1-OMSrootless
 
     # FETCH THE REPO
     git fetch https://github.com/LineageOMS/${URL} cm-14.1
@@ -221,7 +221,7 @@ for FOLDER in ${SUBS_REPOS}; do
     git cherry-pick ${SECOND_HASH}^..${FIRST_HASH}
     
     # PUSH TO GITHUB
-    git push upstream cm-14.1-OMSrootless2
+    git push upstream cm-14.1-OMSrootless
 
     # ADD TO RESULT STRING
     if [[ $? -ne 0 ]]; then

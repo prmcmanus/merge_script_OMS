@@ -194,10 +194,10 @@ for FOLDER in ${SUBS_REPOS}; do
     fi
     
     
-    # FIND NUMBER OF COMMITS IN THE UPSTREAM REPO (MATSSA56)
+    # FIND NUMBER OF COMMITS IN THE UPSTREAM REFERENCE REPO (MATSSA56)
     # MUST BE ON THE CORRECT BRANCH FOR THIS TO WORK
-    git checkout cm-14.1-OMSrootless2
-    git fetch https://github.com/Matssa56/${URL} cm-14.1-OMSrootless2
+    git checkout cm-14.1-OMSrootless
+    git fetch https://github.com/Matssa56/${URL} cm-14.1-OMSrootless
   
     # GET NUMBER OF COMMITS MADE BY MATSSA
     #newLine; echoText "Checking number of commits upstream"
@@ -226,12 +226,25 @@ for FOLDER in ${SUBS_REPOS}; do
     # IF THERE ARE COMMITS MISSING, MERGE THEM
     if [[ ${DIFF} != 0 ]]; then
     		newLine; echoText "${DIFF} missing commits"
-    		
+    	
     		# GET SECOND HASH
     		SECOND_HASH=$( git log --format=%H --committer="Nathan Chancellor" FETCH_HEAD~$((DIFF - 1))^..FETCH_HEAD~$((DIFF - 1)) )
     		
+    		# CHERRY-PICK ON THE REFERENCE REPO
     		# RESET ANY LOCAL CHANGES SO THAT CHERRY-PICK DOES NOT FAIL
 				git reset --hard HEAD
+				
+				# PICK THE COMMITS IF EVERYTHING CHECKS OUT
+				git cherry-pick ${SECOND_HASH}^..${FIRST_HASH_ORIGIN}
+
+				# PUSH TO GITHUB
+				git push upstream cm-14.1-OMSrootless
+				
+				
+				# CHERRY-PICK ON THE USED REPO
+				# MUST BE ON THE CORRECT BRANCH FOR THIS TO WORK
+    		git checkout cm-14.1-OMSrootless2
+    		
 				# PICK THE COMMITS IF EVERYTHING CHECKS OUT
 				git cherry-pick ${SECOND_HASH}^..${FIRST_HASH_ORIGIN}
 
